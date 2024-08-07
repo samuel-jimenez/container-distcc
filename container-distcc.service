@@ -1,0 +1,42 @@
+# container-distcc.service
+
+[Unit]
+Description=Podman container-distcc.service
+Documentation=man:podman-generate-systemd(1)
+Wants=network-online.target
+After=network-online.target
+RequiresMountsFor=%t/containers
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=${HOME}/containers/distcc/distccd.conf
+Restart=on-failure
+TimeoutStopSec=70
+ExecStart=/usr/bin/podman run \
+	--cidfile=%t/%n.ctr-id \
+	--cgroups=no-conmon \
+	--rm \
+	--sdnotify=conmon \
+	-d \
+	-p 3632:3632 \
+	-p 3633:3633 \
+	--replace \
+	--name=distcc distcc /usr/bin/distccd \
+	--no-detach \
+	--daemon \
+	--stats \
+	--log-level=warning \
+	--log-stderr \
+	$DISTCC_ARGS
+ExecStop=/usr/bin/podman stop \
+	--ignore -t 10 \
+	--cidfile=%t/%n.ctr-id
+ExecStopPost=/usr/bin/podman rm \
+	-f \
+	--ignore -t 10 \
+	--cidfile=%t/%n.ctr-id
+Type=notify
+NotifyAccess=all
+
+[Install]
+WantedBy=default.target
