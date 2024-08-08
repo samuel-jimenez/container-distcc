@@ -17,7 +17,7 @@ pacman -Syu podman buildah
 
 Build a minimal container using buildah
 ```sh
-buildah unshare build.sh
+buildah unshare ./build.sh
 ```
 Add a firewall exception:
 ```sh
